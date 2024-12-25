@@ -2,9 +2,10 @@ from .model import User, db
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
-# from . import socketio  # Import the socketio instance from the __init__.py file
-# from . import activeSession
-# Now you can use socketio in this file for event handling or emitting messages
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+)
 
 
 artifact_1BP = Blueprint('artifact_1', __name__)
@@ -85,9 +86,11 @@ def login():
         if( user.isVerified == "False"):
             return jsonify({"error": "Not Verified"}), 401
 
-    #    
+        # The token encodes user information (in this case, user.id) and signs it using the JWT_SECRET_KEY. The client (e.g., a frontend app) can use this token to authenticate subsequent requests.
+        access_token = create_access_token(identity=user.id)   
+     
         # Login successful
-        return jsonify({"message": "Login successful!", "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}}), 200
+        return jsonify({"token": access_token, "message": "Login successful!", "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}}), 200
     
 
 
@@ -121,5 +124,7 @@ def forgetpassword():
     # Update the password in the database
     user.password = hashed_password
     db.session.commit()
+    
+
 
     return jsonify({"message": "Password updated successfully!"}), 200
